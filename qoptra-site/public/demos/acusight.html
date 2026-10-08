@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AcuSight Predictive Maintenance Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Same product UI language as LineSight: quiet surfaces, one accent, semantic colours only for machine status. */
+:root{
+  --bg:#0f1418; --surface:#161d22; --surface-2:#1c252b; --line:#243038; --line-2:#2e3b44;
+  --fg:#e6ebee; --muted:#93a0a9; --accent:#7ea2f0; --accent-soft:rgba(126,162,240,.12);
+  --ok:#4cc184; --ok-soft:rgba(76,193,132,.12); --bad:#ee6b5f; --bad-soft:rgba(238,107,95,.12); --warn:#e0a84a; --warn-soft:rgba(224,168,74,.13);
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:24px;padding-block:28px 56px;display:grid;gap:20px}
+@media (max-width:600px){.wrap{padding-inline:16px}}
+h1,h2{margin:0;font-weight:600;text-wrap:balance}
+h1{font-size:1.25rem;letter-spacing:-.01em}
+h2{font-size:.95rem}
+.label{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+p{margin:0}
+.muted{color:var(--muted);font-size:.84rem}
+
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.brand p{color:var(--muted);font-size:.85rem}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:.78rem;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.dot.idle{background:var(--muted)}.dot.watch{background:var(--warn)}.dot.alarm,.dot.failed{background:var(--bad)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;min-width:0;align-content:start}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500;font-size:.85rem;min-height:38px}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.btn.primary:hover{opacity:.9}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:end}
+.ctl{display:grid;gap:6px;min-width:170px}
+.ctl label{font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.ctl output{font-family:var(--f-mono);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+select{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;min-height:38px}
+.sep{flex:1}
+.clock{font-family:var(--f-mono);font-size:.95rem;padding-bottom:8px}
+
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:2px}
+.kpi .k{font-size:.76rem;color:var(--muted)}
+.kpi .v{font-family:var(--f-mono);font-size:1.25rem;font-weight:500}
+
+.main{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px}
+@media (max-width:920px){.main{grid-template-columns:1fr}}
+.assets{display:grid;gap:8px}
+.asset{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);cursor:pointer}
+.asset:hover{border-color:var(--line-2)}
+.asset[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.asset .nm{font-weight:500;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset .st{font-size:.74rem;font-weight:600}
+.asset .sub{grid-column:2 / 4;font-size:.74rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.st.ok{color:var(--ok)}.st.watch{color:var(--warn)}.st.alarm,.st.failed{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:.8rem;padding:4px 11px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge.watch{background:var(--warn-soft);color:var(--warn)}
+.badge.alarm,.badge.failed{background:var(--bad-soft);color:var(--bad)}
+.detail-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.detail-top .t{display:grid;gap:2px}
+.detail-top .t span{color:var(--muted);font-size:.8rem}
+.verdict{padding:12px 14px;border-radius:10px;background:var(--surface-2);font-size:.88rem;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.verdict b{font-weight:600}
+.imgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.imgs{grid-template-columns:1fr}}
+.fig{display:grid;gap:6px;margin:0}
+.fig canvas{width:100%;height:auto;display:block;border-radius:8px;background:var(--surface-2);max-width:100%}
+.fig figcaption{display:flex;justify-content:space-between;gap:8px;font-size:.75rem;color:var(--muted);flex-wrap:wrap}
+
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);gap:20px}
+@media (max-width:1020px){.row{grid-template-columns:1fr}}
+.trend{display:grid;gap:4px}
+.trend .h{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)}
+.trend .h b{color:var(--fg);font-weight:500;font-family:var(--f-mono)}
+.trend canvas{width:100%;height:auto;display:block;max-width:100%}
+.pf canvas{width:100%;height:auto;display:block;max-width:100%}
+.leak{display:grid;gap:12px}
+.kv{display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:.86rem}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span:nth-child(even){font-family:var(--f-mono);text-align:right}
+.big{font-size:1.8rem;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-family:var(--f-mono)}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:0;max-height:380px;overflow:auto}
+.log li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.82rem}
+.log li .dot{margin-top:6px}
+.log .m{display:grid;gap:1px}
+.log .m span{color:var(--muted);font-size:.74rem;font-family:var(--f-mono)}
+
+.roi{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:800px){.roi{grid-template-columns:1fr}}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:480px){.fields{grid-template-columns:1fr}}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:.78rem;color:var(--muted)}
+.field input{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.88rem}
+.payback{display:grid;gap:14px;padding:18px;border-radius:10px;background:var(--surface-2)}
+footer.note{color:var(--muted);font-size:.78rem;max-width:85ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><path d="M7 54 A47 47 0 1 0 101 54 A47 47 0 1 0 7 54 Z M36 52 A24 24 0 1 0 84 52 A24 24 0 1 0 36 52 Z" fill="var(--fg)" fill-rule="evenodd"/><polygon points="50,60 77,60 111,98 84,98" fill="var(--bg)" stroke="var(--bg)" stroke-width="7" stroke-linejoin="round"/><polygon points="50,60 77,60 111,98 84,98" fill="var(--fg)"/></svg>
+      <div>
+        <h1>AcuSight</h1>
+        <p>by Qoptra · Acoustic and thermal predictive maintenance</p>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip"><span class="dot" id="runDot"></span><span id="runText">Monitoring</span></span>
+      <span class="chip">Hot rolling line · Section A</span>
+      <span class="chip">Simulated demo</span>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="controls">
+      <button class="btn primary" id="toggle" type="button">Pause</button>
+      <div class="ctl"><label for="speed">Time speed <output id="speedOut">12 h / s</output></label><input id="speed" type="range" min="1" max="48" value="12"></div>
+      <div class="clock" id="clock" aria-live="off">Day 31 · 06:00</div>
+      <span class="sep"></span>
+      <div class="ctl"><label for="faultSel">Inject a fault on the selected machine</label><select id="faultSel"></select></div>
+      <button class="btn" id="inject" type="button">Inject fault</button>
+      <button class="btn" id="repair" type="button">Plan repair</button>
+      <button class="btn" id="reset" type="button">Reset</button>
+    </div>
+  </section>
+
+  <section class="kpis" aria-label="Plant summary">
+    <div class="kpi"><span class="k">Machines monitored</span><span class="v" id="kAssets">6</span></div>
+    <div class="kpi"><span class="k">Open alerts</span><span class="v" id="kAlerts">0</span></div>
+    <div class="kpi"><span class="k">Failures prevented</span><span class="v" id="kPrev">0</span></div>
+    <div class="kpi"><span class="k">Unplanned stops</span><span class="v" id="kStops">0</span></div>
+    <div class="kpi"><span class="k">Cost avoided</span><span class="v" id="kSaved">€0</span></div>
+  </section>
+
+  <section class="main">
+    <div class="card">
+      <div class="card-head"><h2>Machines</h2><span class="label">Click to inspect</span></div>
+      <div class="assets" id="assets"></div>
+      <p class="muted">Each rotating machine has an ultrasonic microphone array, a thermal camera view and a vibration sensor. Pipes and valves are covered by ultrasound and thermal only.</p>
+    </div>
+
+    <div class="card">
+      <div class="detail-top">
+        <div class="t"><h2 id="dName">Machine</h2><span id="dSub">Unit</span></div>
+        <span class="badge" id="dBadge">OK</span>
+      </div>
+      <div class="verdict" aria-live="polite"><span id="dVerdict">No anomaly. All sensors within normal range.</span><b class="num" id="dRul"></b></div>
+      <div class="imgs">
+        <figure class="fig"><canvas id="acou" width="640" height="360" aria-label="Acoustic camera view: where ultrasonic sound comes from"></canvas>
+          <figcaption><span>Acoustic camera · 20–100 kHz</span><span class="num" id="acouCap"></span></figcaption></figure>
+        <figure class="fig"><canvas id="therm" width="640" height="360" aria-label="Thermal camera view of the machine"></canvas>
+          <figcaption><span>Thermal camera</span><span class="num" id="thermCap"></span></figcaption></figure>
+      </div>
+      <figure class="fig"><canvas id="spec" width="1100" height="230" aria-label="Live ultrasonic spectrum"></canvas>
+        <figcaption><span>Ultrasonic spectrum, live</span><span>Dashed line: alert level</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="card">
+      <div class="card-head"><h2>Trends</h2><span class="label">Last 30 days</span></div>
+      <div class="trend"><div class="h"><span>Ultrasound level</span><b id="tUs">–</b></div><canvas id="trUs" width="520" height="110"></canvas></div>
+      <div class="trend"><div class="h"><span>Vibration (RMS velocity)</span><b id="tVib">–</b></div><canvas id="trVib" width="520" height="110"></canvas></div>
+      <div class="trend"><div class="h"><span>Hotspot temperature</span><b id="tTemp">–</b></div><canvas id="trTemp" width="520" height="110"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2 id="pfTitle">Detection timeline</h2><span class="label" id="pfLabel">How early each sensor sees it</span></div>
+      <div class="pf" id="pfWrap"><canvas id="pf" width="620" height="350" aria-label="Failure curve showing when each sensor detects the fault"></canvas></div>
+      <p class="muted" id="pfText"></p>
+      <div class="leak" id="leakWrap" hidden>
+        <div><div class="label">Estimated cost of this leak</div><div class="big" id="lYear">–</div></div>
+        <div class="kv">
+          <span>Equivalent hole size</span><span id="lSize">–</span>
+          <span>Air lost</span><span id="lFlow">–</span>
+          <span>Wasted so far</span><span id="lSoFar">–</span>
+          <span>Line pressure</span><span>7 bar</span>
+        </div>
+        <p class="muted">Leaks rarely stop a machine, they quietly waste energy. Ultrasound finds them even in a loud hall, where nobody can hear them.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Event log</h2><span class="label">Newest first</span></div>
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Business case for a plant</h2><span class="label">Edit the numbers</span></div>
+    <div class="roi">
+      <div class="fields">
+        <div class="field"><label for="dtCost">Cost of one hour of unplanned downtime (€)</label><input id="dtCost" type="number" min="0" step="500" value="5000"></div>
+        <div class="field"><label for="stops">Unplanned stops per year</label><input id="stops" type="number" min="0" step="1" value="4"></div>
+        <div class="field"><label for="hours">Hours lost per stop</label><input id="hours" type="number" min="0" step="1" value="8"></div>
+        <div class="field"><label for="prev">Stops prevented by early warning (%)</label><input id="prev" type="number" min="0" max="100" step="5" value="50"></div>
+        <div class="field"><label for="leakSave">Leak and energy savings per year (€)</label><input id="leakSave" type="number" min="0" step="1000" value="12000"></div>
+        <div class="field"><label for="sysCost">System cost per year (€)</label><input id="sysCost" type="number" min="0" step="1000" value="24000"></div>
+      </div>
+      <div class="payback">
+        <div><div class="label">Payback period</div><div class="big" id="rPayback">–</div></div>
+        <div class="kv">
+          <span>Yearly saving</span><span id="rSave">–</span>
+          <span>Net benefit per year</span><span id="rNet">–</span>
+          <span>Return on system cost</span><span id="rMult">–</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Demonstration with simulated machines and signals. The prototype combines an ultrasonic MEMS microphone array (acoustic camera), a thermal camera and MEMS vibration sensors, with the analysis running on an edge computer in the plant. Fault progressions, detection times and costs are illustrative; real values depend on the machine, its load and the plant.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const sm=(p,a,b)=>Math.pow(clamp((p-a)/(b-a),0,1),1.6);
+let seed=1;
+function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+function gauss(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const eur=n=>(n<0?"−€":"€")+Math.abs(Math.round(n)).toLocaleString("en-US");
+
+/* ---------- model ---------- */
+const FAULTS={
+  bearing:{label:"Bearing wear",days:40,fails:true,what:"bearing wear"},
+  misalign:{label:"Misalignment / overheating",days:28,fails:true,what:"shaft misalignment"},
+  airleak:{label:"Compressed-air leak",days:60,fails:false,what:"compressed-air leak"},
+  steamleak:{label:"Steam leak at valve flange",days:45,fails:true,what:"steam leak"}
+};
+const BASE=[
+  {id:"M1",name:"Main drive motor",unit:"Rolling stand 2",kind:"rot",us:16,vib:1.6,temp:55,faults:["bearing","misalign"],down:24,parts:3500},
+  {id:"G1",name:"Roll-stand gearbox",unit:"Rolling stand 2",kind:"rot",us:19,vib:2.1,temp:60,faults:["bearing","misalign"],down:36,parts:6000},
+  {id:"B3",name:"Work-roll bearing",unit:"Rolling stand 3",kind:"rot",us:17,vib:1.8,temp:50,faults:["bearing","misalign"],down:12,parts:1800},
+  {id:"P2",name:"Cooling-water pump",unit:"Roll cooling",kind:"rot",us:15,vib:1.4,temp:42,faults:["bearing","misalign"],down:6,parts:1200},
+  {id:"A1",name:"Compressed-air header",unit:"Utilities",kind:"air",us:10,vib:0,temp:28,faults:["airleak"],down:0,parts:150},
+  {id:"S4",name:"Steam line valve",unit:"Descaling unit",kind:"steam",us:14,vib:0,temp:150,faults:["steamleak"],down:8,parts:900}
+];
+const SENS={us:"Ultrasound",vib:"Vibration",temp:"Thermal"};
+const VIB_ALERT=4.5;
+
+function thr(a){return {us:a.us+10,vib:a.kind==="rot"?VIB_ALERT:null,temp:a.temp+15};}
+function clean(a,f,p){
+  let us=a.us,vib=a.vib,temp=a.temp;
+  if(f==="bearing"){us+=34*sm(p,.08,.55);vib+=7.5*sm(p,.4,1);temp+=32*sm(p,.6,1);}
+  else if(f==="misalign"){vib+=5.5*sm(p,.05,.6);temp+=28*sm(p,.25,1);us+=12*sm(p,.45,1);}
+  else if(f==="airleak"){us+=14+22*p;temp-=3*p;}
+  else if(f==="steamleak"){us+=12+20*sm(p,0,.7);temp+=10+40*sm(p,0,.8);}
+  return {us,vib,temp};
+}
+function noisy(a,s){return {us:s.us+gauss()*1.2,vib:a.kind==="rot"?Math.max(0.2,s.vib+gauss()*0.12):0,temp:s.temp+gauss()*0.6};}
+function over(a,s){const t=thr(a),o=[];if(s.us>=t.us)o.push("us");if(t.vib!=null&&s.vib>=t.vib)o.push("vib");if(s.temp>=t.temp)o.push("temp");return o;}
+function detectP(a,f){ // first p at which each sensor crosses its threshold (noise-free)
+  const r={};for(let p=0;p<=1.0001;p+=0.0025){const s=clean(a,f,p);for(const k of over(a,s))if(r[k]==null)r[k]=p;}return r;}
+
+let S;
+function init(){
+  seed=20261008;
+  S={t:0,running:!reduce,speed:12,sel:"B3",log:[],prevented:0,stops:0,saved:0,leakSaved:0,last:0,acc:0,nextSample:0};
+  S.assets=BASE.map(b=>Object.assign({},b,{fault:null,failed:false,hist:[],det:{},lastStatus:"ok"}));
+  const A=id=>S.assets.find(a=>a.id===id);
+  // history: 30 days, with two developing problems
+  const start=6, H=30*24;
+  A("B3").fault={type:"bearing",t0:start+H-16*24};
+  A("A1").fault={type:"airleak",t0:start+H-11*24};
+  S.t=start;S.nextSample=start;
+  advance(start+H,true);
+  buildAssetList();updateFaultSel();ui(true);
+}
+function pOf(a,t){if(!a.fault)return 0;return clamp((t-a.fault.t0)/(FAULTS[a.fault.type].days*24),0,1);}
+const live=(a,t)=>!!a.fault&&!a.failed&&t>=a.fault.t0;
+function sigNow(a,t){return clean(a,live(a,t)?a.fault.type:null,pOf(a,t));}
+
+function advance(tEnd){
+  while(S.nextSample<=tEnd){
+    const t=S.nextSample;
+    for(const a of S.assets){
+      if(a.failed){a.hist.push({us:a.us-6+gauss(),vib:0,temp:30+gauss()*.5});}
+      else{
+        const s=sigNow(a,t);a.hist.push(noisy(a,s));
+        if(live(a,t)){
+          const f=FAULTS[a.fault.type],p=pOf(a,t);
+          for(const k of over(a,s)){
+            if(!a.det[k]){a.det[k]=t;
+              const days=Math.max(1,Math.round((1-p)*f.days));
+              const msg=f.fails?`${SENS[k]} alert: early signs of ${f.what}. Estimated ${Math.round(days*.8)}–${Math.round(days*1.2)} days to failure.`:`${SENS[k]} alert: ${f.what} detected.`;
+              addLog(t,a,msg,Object.keys(a.det).length>1?"alarm":"watch");}
+          }
+          if(f.fails&&p>=0.9&&!a.det.human){a.det.human=t;addLog(t,a,"Now noticeable by staff: noise and heat. Without monitoring, this is usually when it gets found.","alarm");}
+          if(f.fails&&p>=1){a.failed=true;S.stops++;const cost=a.parts*2+a.down*num("dtCost");addLog(t,a,`Unplanned stop: ${f.what} caused a breakdown. ${a.down} h downtime, about ${eur(cost)}.`,"failed");}
+        }
+      }
+      if(a.hist.length>720)a.hist.shift();
+    }
+    S.nextSample++;
+  }
+  S.t=tEnd;
+}
+function addLog(t,a,msg,sev){S.log.unshift({t,id:a.id,msg,sev});if(S.log.length>60)S.log.pop();S.logDirty=true;}
+
+function status(a){
+  if(a.failed)return "failed";
+  const o=over(a,sigNow(a,S.t));
+  if(!a.fault||o.length===0)return "ok";
+  if(o.length>=2||pOf(a,S.t)>.75)return "alarm";
+  return "watch";
+}
+const STXT={ok:"OK",watch:"Watch",alarm:"Alarm",failed:"Stopped"};
+function health(a){if(a.failed)return 0;if(!a.fault)return 100;const f=FAULTS[a.fault.type],p=pOf(a,S.t);return Math.round(100*(f.fails?1-Math.pow(p,2.2):1-p*.35));}
+
+/* ---------- drawing helpers ---------- */
+const INF=[[0,0,0,4],[.2,40,11,84],[.4,101,21,110],[.6,159,42,99],[.75,212,72,66],[.88,245,125,21],[1,252,255,164]];
+function cmap(v){v=clamp(v,0,1);for(let i=1;i<INF.length;i++){if(v<=INF[i][0]){const a=INF[i-1],b=INF[i],k=(v-a[0])/(b[0]-a[0]);return [a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k,a[3]+(b[3]-a[3])*k];}}return INF[INF.length-1].slice(1);}
+
+function shapes(a){
+  if(a.kind==="rot")return [
+    {r:[.06,.74,.88,.05],p:"base"},{r:[.05,.36,.05,.26],p:"fan"},{r:[.10,.30,.34,.38],p:"body"},
+    {r:[.44,.46,.14,.06],p:"shaft"},{c:[.46,.49,.055],p:"brg"},{c:[.58,.49,.055],p:"brgF"},{r:[.60,.27,.31,.44],p:"driven"}];
+  return [{r:[0,.44,1,.12],p:"pipe"},{r:[.36,.38,.03,.24],p:"flange"},{r:[.61,.38,.03,.24],p:"flangeF"},
+    {r:[.39,.33,.22,.34],p:"valve"},{r:[.485,.18,.03,.15],p:"stem"},{r:[.42,.14,.16,.04],p:"wheel"}];
+}
+function loc(a){return a.kind==="rot"?[.58,.49]:[.625,.44];}
+function drawShapes(c,a,W,H,fill,stroke){
+  c.fillStyle=fill;c.strokeStyle=stroke;c.lineWidth=1.5;
+  for(const s of shapes(a)){c.beginPath();
+    if(s.r)c.rect(s.r[0]*W,s.r[1]*H,s.r[2]*W,s.r[3]*H);else c.arc(s.c[0]*W,s.c[1]*H,s.c[2]*H,0,7);
+    c.fill();c.stroke();}
+}
+
+/* acoustic camera */
+const acou=$("acou"),actx=acou.getContext("2d");
+function drawAcoustic(a,s){
+  const W=640,H=360,c=actx;
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,"#20272d");g.addColorStop(1,"#171c20");c.fillStyle=g;c.fillRect(0,0,W,H);
+  drawShapes(c,a,W,H,"#3a434b","#6b7680");
+  const ex=a.failed?0:clamp((s.us-a.us-3)/30,0,1);
+  const [lx,ly]=loc(a);const x=lx*W,y=ly*H;
+  if(ex>0.02){
+    const R=40+110*ex;const rg=c.createRadialGradient(x,y,0,x,y,R);
+    for(const k of [0,.25,.5,.75,1]){const col=cmap(.95-k*.7);rg.addColorStop(k,`rgba(${col[0]|0},${col[1]|0},${col[2]|0},${(1-k)*(.35+.55*ex)})`);}
+    c.fillStyle=rg;c.beginPath();c.arc(x,y,R,0,7);c.fill();
+    c.strokeStyle="rgba(255,255,255,.55)";c.setLineDash([4,4]);c.lineWidth=1.2;
+    for(const r of [R*.35,R*.7]){c.beginPath();c.arc(x,y,r,0,7);c.stroke();}c.setLineDash([]);
+    c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(x-12,y);c.lineTo(x+12,y);c.moveTo(x,y-12);c.lineTo(x,y+12);c.stroke();
+    c.font=`600 15px ${tok("--f-mono")}`;c.fillStyle="#fff";c.textAlign="left";
+    c.fillText(`${s.us.toFixed(0)} dB`,clamp(x+16,8,W-90),clamp(y-16,20,H-8));
+    $("acouCap").textContent=`Source located · ${s.us.toFixed(1)} dB`;
+  } else {
+    c.font=`500 13px ${tok("--f-body")}`;c.fillStyle="rgba(230,235,238,.6)";c.textAlign="center";
+    c.fillText(a.failed?"Machine stopped":"No ultrasonic source above normal running noise",W/2,H-18);
+    $("acouCap").textContent=a.failed?"":`${s.us.toFixed(1)} dB · normal`;
+  }
+}
+
+/* thermal camera */
+const therm=$("therm"),tctx=therm.getContext("2d");
+const off=document.createElement("canvas");off.width=160;off.height=90;const octx=off.getContext("2d");const img=octx.createImageData(160,90);
+function drawThermal(a,s){
+  const GW=160,GH=90,amb=a.kind==="air"?22:a.kind==="steam"?24:26;
+  const extra=a.failed?0:s.temp-a.temp;
+  const sh=shapes(a);
+  const base=a.failed?{body:32,brg:31,brgF:31,driven:31,fan:29,shaft:30,base:28}:
+    a.kind==="rot"?{body:a.temp-6+.25*Math.max(0,extra),fan:a.temp-14,shaft:a.temp-9,brg:a.temp-2,brgF:a.temp,driven:a.temp-4,base:amb+4}:
+    a.kind==="steam"?{pipe:a.temp,flange:a.temp-8,flangeF:a.temp-8,valve:a.temp-5,stem:a.temp-40,wheel:amb+12}:
+    {pipe:a.temp,flange:a.temp,flangeF:a.temp,valve:a.temp,stem:a.temp-2,wheel:a.temp-3};
+  const [lx,ly]=loc(a);const fx=lx*GW,fy=ly*GH;
+  const tmin=amb-3,tmax=a.kind==="steam"?215:a.kind==="air"?36:a.temp+38;
+  let mx=-1e9,mxX=0,mxY=0;const d=img.data;
+  for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){
+    let T=amb+Math.sin(i*.21+j*.13)*.3;
+    for(const q of sh){const Tq=base[q.p];if(Tq==null)continue;let dd;
+      if(q.r){const x0=q.r[0]*GW,y0=q.r[1]*GH,x1=x0+q.r[2]*GW,y1=y0+q.r[3]*GH;const dx=Math.max(x0-i,0,i-x1),dy=Math.max(y0-j,0,j-y1);dd=dx*dx+dy*dy;}
+      else{const cx=q.c[0]*GW,cy=q.c[1]*GH,r=q.c[2]*GH;const dist=Math.max(0,Math.hypot(i-cx,j-cy)-r);dd=dist*dist;}
+      const m=Math.exp(-dd/4);const v=amb+(Tq-amb)*m;if(v>T)T=v;}
+    if(!a.failed&&extra!==0){
+      const dx=i-fx,dy=j-fy;
+      if(a.kind==="steam"){const up=Math.max(0,-dy);T+=extra*Math.exp(-(dx*dx)/(2*(3+up*.25)**2)-(dy>0?dy*dy/8:up*up/900));}
+      else T+=extra*Math.exp(-(dx*dx+dy*dy)/(2*5.5*5.5));
+    }
+    if(T>mx){mx=T;mxX=i;mxY=j;}
+    const col=cmap(Math.pow(clamp((T-tmin)/(tmax-tmin),0,1),.6)),o=(j*GW+i)*4;d[o]=col[0];d[o+1]=col[1];d[o+2]=col[2];d[o+3]=255;
+  }
+  octx.putImageData(img,0,0);
+  const c=tctx,W=640,H=360;c.imageSmoothingEnabled=true;c.drawImage(off,0,0,W,H);
+  // scale bar
+  const bx=W-26,by=30,bh=H-60;for(let k=0;k<bh;k++){const col=cmap(Math.pow(1-k/bh,.6));c.fillStyle=`rgb(${col[0]|0},${col[1]|0},${col[2]|0})`;c.fillRect(bx,by+k,12,1);}
+  c.font=`500 11px ${tok("--f-mono")}`;c.fillStyle="#fff";c.textAlign="right";c.fillText(`${tmax}°`,bx-4,by+8);c.fillText(`${tmin}°`,bx-4,by+bh);
+  // max marker
+  const X=mxX/GW*W,Y=mxY/GH*H;c.strokeStyle="#fff";c.lineWidth=1.5;c.strokeRect(X-9,Y-9,18,18);
+  c.textAlign="left";c.font=`600 14px ${tok("--f-mono")}`;c.fillText(`${mx.toFixed(1)} °C`,clamp(X+14,6,W-110),clamp(Y-12,18,H-8));
+  $("thermCap").textContent=`Max ${mx.toFixed(1)} °C`;
+}
+
+/* spectrum */
+const spec=$("spec"),sctx=spec.getContext("2d");
+function drawSpectrum(a,s){
+  const c=sctx,W=1100,H=230,L=46,R=14,T=14,B=30,pw=W-L-R,ph=H-T-B,N=220;
+  c.fillStyle=tok("--surface-2");c.fillRect(0,0,W,H);
+  const y=v=>T+ph*(1-clamp(v/60,0,1));
+  c.strokeStyle=tok("--line-2");c.lineWidth=1;c.font=`11px ${tok("--f-mono")}`;c.fillStyle=tok("--muted");
+  for(const v of [0,20,40,60]){c.beginPath();c.moveTo(L,y(v));c.lineTo(W-R,y(v));c.stroke();c.textAlign="right";c.fillText(v+" dB",L-6,y(v)+4);}
+  c.textAlign="center";for(let f=20;f<=100;f+=10)c.fillText(f+" kHz",L+pw*(f-20)/80,H-10);
+  const ft=a.failed?null:(a.fault?a.fault.type:null),lift=a.failed?0:Math.max(0,s.us-a.us);
+  c.beginPath();
+  for(let i=0;i<=N;i++){const f=20+80*i/N;let v=6+Math.abs(gauss())*2.2;
+    if(a.kind==="rot"&&!a.failed)v+=(a.us-8)*Math.exp(-1*((f-28)/12)**2);
+    if(ft==="bearing"){v+=lift*.35*Math.exp(-1*((f-38)/14)**2);for(let k=0;k<9;k++)v+=lift*.75*Math.exp(-1*((f-(28+k*2.6))/.45)**2);}
+    else if(ft==="misalign"){for(let k=0;k<4;k++)v+=lift*.7*Math.exp(-1*((f-(21+k*3.1))/.6)**2);}
+    else if(ft==="airleak")v+=lift*1.1*Math.exp(-1*((f-40)/5)**2);
+    else if(ft==="steamleak")v+=lift*1.05*Math.exp(-1*((f-34)/9)**2);
+    const X=L+pw*i/N,Y=y(v);i?c.lineTo(X,Y):c.moveTo(X,Y);}
+  c.strokeStyle=tok("--accent");c.lineWidth=1.6;c.stroke();
+  c.lineTo(W-R,y(0));c.lineTo(L,y(0));c.closePath();c.fillStyle=tok("--accent-soft");c.fill();
+  c.strokeStyle=tok("--bad");c.setLineDash([6,5]);c.beginPath();c.moveTo(L,y(thr(a).us));c.lineTo(W-R,y(thr(a).us));c.stroke();c.setLineDash([]);
+}
+
+/* trends */
+function drawTrend(cv,vals,th,lo,hi,fmt){
+  const c=cv.getContext("2d"),W=cv.width,H=cv.height,L=62,R=6,T=10,B=22,pw=W-L-R,ph=H-T-B;
+  c.clearRect(0,0,W,H);
+  const y=v=>T+ph*(1-clamp((v-lo)/(hi-lo),0,1));
+  c.font=`13px ${tok("--f-mono")}`;c.fillStyle=tok("--muted");c.strokeStyle=tok("--line");c.lineWidth=1;
+  for(const v of [lo,hi]){c.beginPath();c.moveTo(L,y(v));c.lineTo(W-R,y(v));c.stroke();c.textAlign="right";c.fillText(fmt(v),L-5,y(v)+3);}
+  c.textAlign="left";c.fillText("−30 d",L,H-4);c.textAlign="right";c.fillText("now",W-R,H-4);
+  if(th!=null){c.strokeStyle=tok("--bad");c.setLineDash([5,4]);c.beginPath();c.moveTo(L,y(th));c.lineTo(W-R,y(th));c.stroke();c.setLineDash([]);}
+  if(!vals){c.textAlign="center";c.fillStyle=tok("--muted");c.font=`15px ${tok("--f-body")}`;c.fillText("No vibration sensor on pipes and valves",L+pw/2,T+ph/2+4);return;}
+  c.beginPath();vals.forEach((v,i)=>{const X=L+pw*i/719,Y=y(v);i?c.lineTo(X,Y):c.moveTo(X,Y);});
+  c.strokeStyle=tok("--fg");c.globalAlpha=.85;c.lineWidth=1.2;c.stroke();c.globalAlpha=1;
+}
+function trendRange(vals,th){let lo=Math.min(...vals),hi=Math.max(...vals);if(th!=null){lo=Math.min(lo,th);hi=Math.max(hi,th);}const pad=(hi-lo)*.15||1;return [Math.floor(lo-pad),Math.ceil(hi+pad)];}
+
+/* P-F curve */
+const pfc=$("pf"),pctx=pfc.getContext("2d");
+function drawPF(a){
+  const showA=a.fault&&FAULTS[a.fault.type].fails?a:S.assets.find(x=>x.id==="B3");
+  const type=a.fault&&FAULTS[a.fault.type].fails?a.fault.type:"bearing";
+  const f=FAULTS[type],det=detectP(showA,type),hp=p=>1-Math.pow(p,2.2);
+  const c=pctx,W=620,H=350,L=40,R=16,T=18,B=92,pw=W-L-R,ph=H-T-B;
+  c.clearRect(0,0,W,H);
+  const X=p=>L+pw*p,Y=h=>T+ph*(1-h);
+  c.strokeStyle=tok("--line-2");c.lineWidth=1;c.beginPath();c.moveTo(L,T);c.lineTo(L,T+ph);c.lineTo(W-R,T+ph);c.stroke();
+  c.font=`13px ${tok("--f-mono")}`;c.fillStyle=tok("--muted");c.textAlign="center";
+  for(let d=0;d<=f.days;d+=10)c.fillText(`day ${d}`,X(d/f.days),T+ph+16);
+  c.save();c.translate(14,T+ph/2);c.rotate(-Math.PI/2);c.fillText("Machine condition",0,0);c.restore();
+  c.beginPath();for(let i=0;i<=100;i++){const p=i/100;i?c.lineTo(X(p),Y(hp(p))):c.moveTo(X(p),Y(hp(p)));}
+  c.strokeStyle=tok("--fg");c.lineWidth=2;c.stroke();
+  const marks=[["us","Ultrasound",tok("--accent")],["vib","Vibration",tok("--warn")],["temp","Thermal","#d9824a"],["human","Staff notice",tok("--muted")],["fail","Failure",tok("--bad")]];
+  const ps={...det,human:.9,fail:1};
+  let lx=L,ly=H-32;c.font=`500 16px ${tok("--f-body")}`;c.textAlign="left";
+  for(const [k,name,col] of marks){const p=ps[k];if(p==null)continue;
+    c.strokeStyle=col;c.setLineDash([3,4]);c.beginPath();c.moveTo(X(p),Y(hp(p)));c.lineTo(X(p),T+ph);c.stroke();c.setLineDash([]);
+    c.fillStyle=col;c.beginPath();c.arc(X(p),Y(hp(p)),5,0,7);c.fill();
+    const txt=`${name} · day ${Math.round(p*f.days)}`,w=c.measureText(txt).width+30;
+    if(lx+w>W-R){lx=L;ly+=22;}
+    c.beginPath();c.arc(lx+5,ly-4,5,0,7);c.fill();c.fillStyle=tok("--muted");c.fillText(txt,lx+15,ly);lx+=w;}
+  if(a===showA&&a.fault&&!a.failed){const p=pOf(a,S.t);c.fillStyle="#fff";c.strokeStyle=tok("--accent");c.lineWidth=2;c.beginPath();c.arc(X(p),Y(hp(p)),7,0,7);c.fill();c.stroke();
+    c.font=`600 11px ${tok("--f-mono")}`;c.fillStyle=tok("--fg");c.textAlign="left";c.fillText("NOW",X(p)+10,Y(hp(p))+18);}
+  const first=["us","vib","temp"].filter(k=>det[k]!=null).sort((x,y)=>det[x]-det[y]);
+  const warn=k=>Math.round((1-det[k])*f.days);
+  const intro=a===showA?`${f.label} on ${a.id}.`:"No developing fault on this machine. Example shown: bearing wear.";
+  $("pfText").textContent=`${intro} ${first.map(k=>`${SENS[k]} warns ${warn(k)} days ahead`).join(", ")}; staff would notice about ${Math.round(.1*f.days)} days before failure.`;
+}
+function drawLeak(a){
+  const p=pOf(a,S.t),d=1+2.5*p,flow=1.2*d*d,year=flow*3.6*8000*0.11*0.18;
+  const hours=(S.t-a.fault.t0);
+  $("lYear").textContent=eur(year)+" / year";$("lSize").textContent=d.toFixed(1)+" mm";$("lFlow").textContent=flow.toFixed(1)+" l/s";
+  $("lSoFar").textContent=eur(year*hours/8760);
+  $("pfText").textContent="";
+  return year;
+}
+
+/* ---------- UI ---------- */
+function num(id){return +$(id).value||0;}
+function buildAssetList(){
+  const box=$("assets");box.innerHTML="";
+  for(const a of S.assets){
+    const b=document.createElement("button");b.type="button";b.className="asset";b.dataset.id=a.id;
+    b.innerHTML=`<span class="dot"></span><span class="nm">${a.id} · ${a.name}</span><span class="st"></span><span class="sub"><span>${a.unit}</span><span class="num hp"></span></span>`;
+    b.addEventListener("click",()=>{S.sel=a.id;updateFaultSel();ui(true);});
+    box.append(b);
+  }
+}
+function updateFaultSel(){
+  const a=cur(),sel=$("faultSel");sel.innerHTML=a.faults.map(f=>`<option value="${f}">${FAULTS[f].label}</option>`).join("");
+}
+const cur=()=>S.assets.find(a=>a.id===S.sel);
+function clock(t){const d=Math.floor(t/24)+1,h=Math.floor(t%24);return `Day ${d} · ${String(h).padStart(2,"0")}:00`;}
+
+function ui(full){
+  // asset list
+  let open=0;
+  document.querySelectorAll(".asset").forEach(el=>{
+    const a=S.assets.find(x=>x.id===el.dataset.id),st=status(a);if(st!=="ok")open++;
+    el.setAttribute("aria-pressed",a.id===S.sel);el.querySelector(".dot").className="dot "+(st==="ok"?"":st);
+    const s=el.querySelector(".st");s.className="st "+st;s.textContent=STXT[st];
+    el.querySelector(".hp").textContent=`health ${health(a)} %`;
+  });
+  $("kAlerts").textContent=open;$("kPrev").textContent=S.prevented;$("kStops").textContent=S.stops;$("kSaved").textContent=eur(S.saved);
+  $("clock").textContent=clock(S.t);
+  // detail
+  const a=cur(),st=status(a),s=a.failed?{us:a.us-6,vib:0,temp:30}:noisy(a,sigNow(a,S.t));
+  $("dName").textContent=`${a.id} · ${a.name}`;$("dSub").textContent=`${a.unit} · health ${health(a)} %`;
+  const b=$("dBadge");b.className="badge "+(st==="ok"?"":st);b.textContent=STXT[st];
+  let v="No anomaly. All sensors within normal range.",rul="";
+  if(a.failed)v="Machine stopped after a breakdown. Repair to restart.";
+  else if(a.fault&&st!=="ok"){const f=FAULTS[a.fault.type],o=over(a,sigNow(a,S.t)),p=pOf(a,S.t);
+    v=`Likely ${f.what}. Seen by ${o.map(k=>SENS[k].toLowerCase()).join(" + ")}.`;
+    if(f.fails){const d=(1-p)*f.days;rul=`~${Math.max(0,Math.round(d*.8))}–${Math.round(d*1.2)} days to failure`;}else rul="No breakdown risk, energy loss";}
+  else if(a.fault)v="Fault developing below alert levels. Sensors are watching.";
+  $("dVerdict").textContent=v;$("dRul").textContent=rul;
+  $("repair").textContent=a.failed?"Repair and restart":"Plan repair";
+  $("repair").disabled=!a.fault&&!a.failed;$("inject").disabled=!!a.fault||a.failed;
+  drawAcoustic(a,s);drawThermal(a,s);drawSpectrum(a,s);
+  // trends
+  const us=a.hist.map(h=>h.us),vib=a.hist.map(h=>h.vib),tp=a.hist.map(h=>h.temp),t=thr(a);
+  let r=trendRange(us,t.us);drawTrend($("trUs"),us,t.us,r[0],r[1],v=>v+" dB");$("tUs").textContent=s.us.toFixed(1)+" dB";
+  if(a.kind==="rot"){r=trendRange(vib,t.vib);drawTrend($("trVib"),vib,t.vib,Math.max(0,r[0]),r[1],v=>v+" mm/s");$("tVib").textContent=s.vib.toFixed(2)+" mm/s";}
+  else{drawTrend($("trVib"),null,null,0,1,v=>"");$("tVib").textContent="n/a";}
+  r=trendRange(tp,t.temp);drawTrend($("trTemp"),tp,t.temp,r[0],r[1],v=>v+" °C");$("tTemp").textContent=s.temp.toFixed(1)+" °C";
+  // timeline or leak
+  const leak=a.fault&&!FAULTS[a.fault.type].fails;
+  $("pfWrap").hidden=leak;$("leakWrap").hidden=!leak;
+  $("pfTitle").textContent=leak?"Leak cost":"Detection timeline";$("pfLabel").textContent=leak?"Compressed air, estimate":"How early each sensor sees it";
+  if(leak)drawLeak(a);else drawPF(a);
+  if(S.logDirty||full)renderLog();
+}
+function renderLog(){
+  S.logDirty=false;
+  $("log").innerHTML=S.log.map(e=>`<li><span class="dot ${e.sev==="ok"?"":e.sev}"></span><span class="m"><b>${e.id} · ${e.msg}</b><span>${clock(e.t)}</span></span></li>`).join("");
+}
+
+/* ---------- actions ---------- */
+$("toggle").addEventListener("click",()=>setRunning(!S.running));
+$("speed").addEventListener("input",e=>{S.speed=+e.target.value;$("speedOut").textContent=S.speed+" h / s";});
+$("inject").addEventListener("click",()=>{const a=cur();if(a.fault||a.failed)return;
+  a.fault={type:$("faultSel").value,t0:S.t};a.det={};addLog(S.t,a,`Fault injected for the demo: ${FAULTS[a.fault.type].what} starts developing.`,"ok");
+  if(!S.running)setRunning(true);ui(true);});
+$("repair").addEventListener("click",()=>{const a=cur();
+  if(a.failed){addLog(S.t,a,"Repaired after breakdown and restarted.","ok");a.failed=false;a.fault=null;a.det={};ui(true);return;}
+  if(!a.fault)return;const f=FAULTS[a.fault.type];
+  if(f.fails){
+    const seen=Object.keys(a.det).some(k=>k!=="human");
+    const unplanned=a.parts*2+a.down*num("dtCost"),planned=a.parts;
+    if(seen){S.prevented++;S.saved+=unplanned-planned;addLog(S.t,a,`Repair planned for the next scheduled stop: about ${eur(planned)} instead of ${eur(unplanned)} for a breakdown.`,"ok");}
+    else addLog(S.t,a,"Repaired before any alert.","ok");
+  } else {const y=drawLeak(a);S.leakSaved+=y;S.saved+=y;addLog(S.t,a,`Leak fixed. Saves about ${eur(y)} per year in compressed air.`,"ok");}
+  a.fault=null;a.det={};ui(true);});
+$("reset").addEventListener("click",()=>{init();setRunning(!reduce);});
+
+let raf=0;
+function loop(ts){
+  const dt=Math.min(.1,(ts-(S.last||ts))/1000);S.last=ts;
+  if(S.running){advance(S.t+dt*S.speed);S.acc+=dt;if(S.acc>.15){S.acc=0;ui(false);}raf=requestAnimationFrame(loop);}
+}
+function setRunning(on){S.running=on;$("toggle").textContent=on?"Pause":"Run";$("runText").textContent=on?"Monitoring":"Paused";$("runDot").className="dot"+(on?"":" idle");
+  cancelAnimationFrame(raf);if(on){S.last=0;raf=requestAnimationFrame(loop);}else ui(true);}
+
+/* business case */
+function roi(){
+  const save=num("stops")*num("hours")*num("dtCost")*num("prev")/100+num("leakSave"),sys=num("sysCost");
+  $("rSave").textContent=eur(save);$("rNet").textContent=eur(save-sys);
+  $("rMult").textContent=sys?(save/sys).toFixed(1)+"×":"–";
+  $("rPayback").textContent=save<=0?"No payback":(sys/(save/12)<1?"Under 1 month":(sys/(save/12)).toFixed(1)+" months");
+}
+["dtCost","stops","hours","prev","leakSave","sysCost"].forEach(id=>$(id).addEventListener("input",roi));
+
+init();roi();setRunning(S.running);
+})();
+</script>
+<script>
+(function(){function post(){try{parent.postMessage({type:"qoptra-demo-height",height:document.documentElement.scrollHeight},"*");}catch(e){}}
+new ResizeObserver(post).observe(document.body);window.addEventListener("load",post);post();})();
+</script>
+</body>
+</html>

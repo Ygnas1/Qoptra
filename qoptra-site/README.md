@@ -10,6 +10,8 @@ Next.js site for Qoptra: home page with an interactive explainer of the inspecti
 | `/demos` | List of hardware demos |
 | `/demos/linesight` | LineSight inspection demo embedded in the site |
 | `/demos/linesight.html` | The same demo, full screen (good for investor meetings) |
+| `/demos/acusight` | AcuSight predictive-maintenance demo (ultrasound + thermal + vibration) |
+| `/demos/acusight.html` | The same demo, full screen |
 
 ## Run locally
 

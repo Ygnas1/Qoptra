@@ -138,11 +138,12 @@ export default function Home() {
               <p>Visual inspection of metal brackets on a running conveyor: live verdicts, reject photos, shift report and a payback calculator.</p>
               <span className="go">Open demo →</span>
             </Link>
-            <div className="card demo-card soon">
-              <span className="tag"><span className="dot soon" />Coming soon</span>
-              <h3>Next product</h3>
-              <p>More Qoptra products are in development. Get in touch if you want to test one early.</p>
-            </div>
+            <Link href="/demos/acusight" className="card demo-card">
+              <span className="tag"><span className="dot" />Live demo</span>
+              <h3>AcuSight</h3>
+              <p>Predictive maintenance: an acoustic camera, thermal imaging and vibration sensors hear and see machine wear weeks before a breakdown.</p>
+              <span className="go">Open demo →</span>
+            </Link>
             <div className="card demo-card soon">
               <span className="tag"><span className="dot soon" />Coming soon</span>
               <h3>Your part</h3>

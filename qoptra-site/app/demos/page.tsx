@@ -21,11 +21,12 @@ export default function Demos() {
           <p>AI visual inspection on a running conveyor. Learns from good parts only and rejects anything unusual.</p>
           <span className="go">Open demo →</span>
         </Link>
-        <div className="card demo-card soon">
-          <span className="tag"><span className="dot soon" />Coming soon</span>
-          <h3>Next product</h3>
-          <p>More Qoptra products are in development.</p>
-        </div>
+        <Link href="/demos/acusight" className="card demo-card">
+          <span className="tag"><span className="dot" />Live demo</span>
+          <h3>AcuSight</h3>
+          <p>Predictive maintenance for heavy industry. Ultrasound, thermal imaging and vibration catch bearing wear and leaks weeks before a breakdown.</p>
+          <span className="go">Open demo →</span>
+        </Link>
         <div className="card demo-card soon">
           <span className="tag"><span className="dot soon" />Coming soon</span>
           <h3>Your part</h3>
