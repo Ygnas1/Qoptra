@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LineSight Inspection Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: quiet product UI. Station view + live result side by side, analytics and payback below. One accent, semantic green/red only for verdicts. */
+:root{
+  --bg:#f5f6f7; --surface:#ffffff; --surface-2:#f0f2f4; --line:#e2e6ea; --line-2:#d3d9de;
+  --fg:#16202a; --muted:#66727d; --accent:#2a55b8; --accent-soft:rgba(42,85,184,.08);
+  --ok:#1f7a4a; --ok-soft:rgba(31,122,74,.09); --bad:#c0392f; --bad-soft:rgba(192,57,47,.08); --warn:#9a6a14;
+  --belt:#e7ebee; --belt-tick:#d9dfe3;
+  --steel-1:#f4f6f7; --steel-2:#c3cbd1; --steel-edge:#8a96a0; --shadow:rgba(20,30,40,.10);
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1418; --surface:#161d22; --surface-2:#1c252b; --line:#243038; --line-2:#2e3b44;
+  --fg:#e6ebee; --muted:#93a0a9; --accent:#7ea2f0; --accent-soft:rgba(126,162,240,.12);
+  --ok:#4cc184; --ok-soft:rgba(76,193,132,.12); --bad:#ee6b5f; --bad-soft:rgba(238,107,95,.12); --warn:#d9a441;
+  --belt:#1d262c; --belt-tick:#253038;
+  --steel-1:#dfe5e9; --steel-2:#a6b1b8; --steel-edge:#6c7880; --shadow:rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1418; --surface:#161d22; --surface-2:#1c252b; --line:#243038; --line-2:#2e3b44;
+  --fg:#e6ebee; --muted:#93a0a9; --accent:#7ea2f0; --accent-soft:rgba(126,162,240,.12);
+  --ok:#4cc184; --ok-soft:rgba(76,193,132,.12); --bad:#ee6b5f; --bad-soft:rgba(238,107,95,.12); --warn:#d9a441;
+  --belt:#1d262c; --belt-tick:#253038;
+  --steel-1:#dfe5e9; --steel-2:#a6b1b8; --steel-edge:#6c7880; --shadow:rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:24px;padding-block:28px 56px;display:grid;gap:20px}
+h1,h2{margin:0;font-weight:600;text-wrap:balance}
+h1{font-size:1.25rem;letter-spacing:-.01em}
+h2{font-size:.95rem}
+.label{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding-bottom:4px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:28px;height:28px;border-radius:7px;background:var(--fg);display:grid;place-items:center;flex:none}
+.mark i{width:10px;height:10px;border-radius:50%;border:2px solid var(--surface)}
+.brand p{margin:0;color:var(--muted);font-size:.85rem}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:.78rem;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.dot.idle{background:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;min-width:0;align-content:start}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+
+.main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px}
+@media (max-width:920px){.main{grid-template-columns:1fr}}
+
+.station{padding:0;gap:0;overflow:hidden}
+.station .card-head{padding:16px 20px 0}
+.station canvas{display:block;width:100%;height:250px}
+.meta-row{display:flex;flex-wrap:wrap;gap:6px 20px;padding:0 20px 14px;font-size:.78rem;color:var(--muted)}
+.meta-row b{color:var(--fg);font-weight:500}
+.controls{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:14px 22px;align-items:end;padding:16px 20px 18px;border-top:1px solid var(--line)}
+@media (max-width:640px){.controls{grid-template-columns:1fr 1fr}}
+.ctl{display:grid;gap:6px;min-width:0}
+.ctl label{font-size:.78rem;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.ctl output{font-family:var(--f-mono);color:var(--fg)}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500;font-size:.85rem}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.btn.primary:hover{opacity:.9}
+
+.result{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.badge{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:.85rem;padding:5px 12px;border-radius:999px;background:var(--ok-soft);color:var(--ok)}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.result-text{display:grid;gap:2px}
+.result-text b{font-weight:500}
+.result-text span{color:var(--muted);font-size:.8rem}
+.shot canvas{width:100%;height:auto;aspect-ratio:16/9;max-width:100%;border-radius:8px;background:var(--surface-2);display:block}
+.cap{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line)}
+.kpi{padding:12px 0;display:grid;gap:2px}
+.kpi:nth-child(odd){padding-right:12px}
+.kpi:nth-child(-n+2){border-bottom:1px solid var(--line)}
+.kpi .k{font-size:.76rem;color:var(--muted)}
+.kpi .v{font-family:var(--f-mono);font-size:1.15rem;font-weight:500}
+
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,.95fr);gap:20px}
+@media (max-width:1020px){.row{grid-template-columns:1fr}}
+.muted{color:var(--muted);font-size:.84rem;margin:0}
+.train-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.train-grid canvas{width:100%;height:auto;aspect-ratio:3/2;border-radius:5px;background:var(--surface-2);display:block;max-width:100%}
+.progress{height:4px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.progress span{display:block;height:100%;width:100%;background:var(--accent);transition:width .15s linear}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.g-item{display:grid;gap:5px;font-size:.75rem}
+.g-item canvas{width:100%;height:auto;aspect-ratio:3/2;border-radius:6px;background:var(--surface-2);display:block;max-width:100%}
+.g-item .t{display:flex;justify-content:space-between;gap:4px;color:var(--muted)}
+.g-item .t b{color:var(--fg);font-weight:500}
+.g-item .t .fa{color:var(--warn)}
+.bars{display:grid;gap:11px}
+.bar{display:grid;grid-template-columns:7.2em minmax(0,1fr) 2.4em;gap:10px;align-items:center;font-size:.82rem}
+.bar .track{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:var(--fg);opacity:.75;border-radius:99px}
+.bar .fill.miss{background:var(--warn);opacity:1}
+.bar .n{text-align:right;font-family:var(--f-mono)}
+
+.report table{width:100%;border-collapse:collapse;font-size:.86rem}
+.report td{padding:8px 0;border-bottom:1px solid var(--line)}
+.report td:last-child{text-align:right;font-family:var(--f-mono)}
+.toast{font-size:.82rem;color:var(--ok)}
+#repText{width:100%;min-height:10em;font-family:var(--f-mono);font-size:.8rem;background:var(--surface-2);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:10px}
+
+.roi{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:800px){.roi{grid-template-columns:1fr}}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:grid;gap:5px;min-width:0}
+.field label{font-size:.78rem;color:var(--muted)}
+.field input,.field select{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.88rem}
+.payback{display:grid;gap:14px;padding:18px;border-radius:10px;background:var(--surface-2)}
+.payback .big{font-size:2rem;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.kv{display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:.86rem}
+.kv span:nth-child(odd){color:var(--muted)}
+.kv span:nth-child(even){font-family:var(--f-mono);text-align:right}
+footer.note{color:var(--muted);font-size:.78rem;max-width:80ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><path d="M7 54 A47 47 0 1 0 101 54 A47 47 0 1 0 7 54 Z M36 52 A24 24 0 1 0 84 52 A24 24 0 1 0 36 52 Z" fill="var(--fg)" fill-rule="evenodd"/><polygon points="50,60 77,60 111,98 84,98" fill="var(--bg)" stroke="var(--bg)" stroke-width="7" stroke-linejoin="round"/><polygon points="50,60 77,60 111,98 84,98" fill="var(--fg)"/></svg>
+      <div>
+        <h1>LineSight</h1>
+        <p>by Qoptra · AI visual inspection for manufacturers</p>
+      </div>
+    </div>
+    <div class="chips">
+      <span class="chip"><span class="dot" id="runDot"></span><span id="runText">Line running</span></span>
+      <span class="chip">Simulated demo</span>
+    </div>
+  </header>
+
+  <section class="main">
+    <div class="card station">
+      <div class="card-head"><h2>Station LS-01 · Line 2</h2><span class="label mono" id="clock">Shift 1 · 06:00:00</span></div>
+      <canvas id="belt" aria-label="Simulated conveyor with parts passing under the inspection camera"></canvas>
+      <div class="meta-row"><span>Part <b>BRK-2040 bracket</b></span><span>Takt <b class="num" id="takt">2.0 s</b></span><span>Model <b>PatchCore · 25 good samples</b></span><span>Runs on <b>edge device at the line</b></span></div>
+      <div class="controls">
+        <button class="btn primary" id="toggle" type="button">Pause line</button>
+        <div class="ctl"><label for="speed">Line speed <output id="speedOut">30 /min</output></label><input id="speed" type="range" min="12" max="60" step="2" value="30"></div>
+        <div class="ctl"><label for="defRate">Defect rate <output id="defOut">8 %</output></label><input id="defRate" type="range" min="2" max="25" value="8"></div>
+        <div class="ctl"><label for="thresh">Sensitivity threshold <output id="thOut">0.45</output></label><input id="thresh" type="range" min="0.20" max="0.80" step="0.01" value="0.45"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Last inspection</h2><span class="label mono" id="shotId">#000000</span></div>
+      <div class="result" aria-live="polite">
+        <div class="result-text"><b id="vType">No anomaly found</b><span class="num" id="vScore">Anomaly score 0.12 · threshold 0.45</span></div>
+        <span class="badge" id="badge">OK</span>
+      </div>
+      <div class="shot"><canvas id="shot" width="640" height="360" aria-label="Camera image of the last inspected part"></canvas></div>
+      <div class="cap"><span>Highlighted area: where the part differs from the good samples</span></div>
+      <div class="kpis">
+        <div class="kpi"><span class="k">Inspected this shift</span><span class="v" id="sTotal">0</span></div>
+        <div class="kpi"><span class="k">Rejected</span><span class="v" id="sNok">0</span></div>
+        <div class="kpi"><span class="k">Defects caught</span><span class="v" id="sRecall">–</span></div>
+        <div class="kpi"><span class="k">False alarm rate</span><span class="v" id="sFp">–</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="card">
+      <div class="card-head"><h2>Model training</h2><span class="label" id="trainState">Ready</span></div>
+      <p class="muted">Learns what a good part looks like from 25 examples. No defect photos or labelling needed.</p>
+      <div class="train-grid" id="trainGrid"></div>
+      <div class="progress" aria-hidden="true"><span id="trainBar"></span></div>
+      <div class="actions"><button class="btn" id="retrain" type="button">Retrain from 25 parts</button><span class="muted num" id="trainNote">Trained in 38 s</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Rejected parts</h2><span class="label">Newest first</span></div>
+      <div class="gallery" id="gallery"></div>
+      <p class="muted">Each reject is saved with its image for quality records and customer complaints.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Defects by type</h2><span class="label">This shift</span></div>
+      <div class="bars" id="bars"></div>
+      <div class="actions"><button class="btn" id="reportBtn" type="button">Create shift report</button></div>
+    </div>
+  </section>
+
+  <section class="card report" id="report" hidden>
+    <div class="card-head"><h2>Shift report · Station LS-01</h2><span class="label mono" id="repTime"></span></div>
+    <table><tbody id="repBody"></tbody></table>
+    <div class="actions"><button class="btn" id="copyRep" type="button">Copy report</button><button class="btn" id="closeRep" type="button">Close</button><span class="toast" id="toast" role="status"></span></div>
+    <textarea id="repText" readonly hidden aria-label="Report text"></textarea>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Payback for a factory</h2><span class="label">Edit the numbers</span></div>
+    <div class="roi">
+      <div class="fields">
+        <div class="field"><label for="shifts">Shifts per day</label><select id="shifts"><option value="1">1 shift</option><option value="2" selected>2 shifts</option><option value="3">3 shifts</option></select></div>
+        <div class="field"><label for="inspCost">Inspector cost per year (€)</label><input id="inspCost" type="number" min="0" step="1000" value="47000"></div>
+        <div class="field"><label for="share">Inspection work taken over (%)</label><input id="share" type="number" min="0" max="100" step="5" value="60"></div>
+        <div class="field"><label for="scrap">Scrap and complaint savings per year (€)</label><input id="scrap" type="number" min="0" step="1000" value="8000"></div>
+        <div class="field"><label for="setup">Station setup (€)</label><input id="setup" type="number" min="0" step="500" value="12000"></div>
+        <div class="field"><label for="fee">Monthly fee (€)</label><input id="fee" type="number" min="0" step="50" value="400"></div>
+      </div>
+      <div class="payback">
+        <div><div class="label">Payback period</div><div class="big num" id="rPayback">–</div></div>
+        <div class="kv">
+          <span>Yearly saving</span><span id="rSave">–</span>
+          <span>Year 1 cost</span><span id="rCost1">–</span>
+          <span>Net benefit over 3 years</span><span id="rNet3">–</span>
+          <span>Typical Cognex / Keyence setup</span><span>€15–50k upfront</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">Demonstration with simulated parts and scores. The prototype runs PatchCore anomaly detection on an industrial camera with an edge AI computer at the line, so images stay inside the factory. Inspector cost based on Austrian metal-trade wages plus about 29.5 % employer costs.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let seed=20261004;
+function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+function gauss(){let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+const TYPES=["Scratch","Dent","Corrosion","Missing hole","Crack"];
+const S={running:!reduce,ppm:30,defRate:.08,th:.45,training:false,total:0,nok:0,tp:0,fn:0,fp:0,tn:0,byType:{},gallery:[],simSec:0,nextId:418210};
+TYPES.forEach(t=>S.byType[t]=0);
+
+function makePart(){
+  const p={id:S.nextId++,defect:null,dx:(rnd()-.5)*0.5,dy:(rnd()-.5)*0.3,sev:0,ang:rnd()*Math.PI,s:rnd()*1e9|0};
+  if(rnd()<S.defRate){
+    p.defect=TYPES[Math.floor(rnd()*TYPES.length)];p.sev=0.25+rnd()*0.75;
+    p.dx=(rnd()-.5)*0.55;p.dy=(rnd()-.5)*0.38;
+    if(p.defect==="Missing hole"){p.dx=0.3;p.dy=0;p.sev=0.9;}
+    p.score=clamp(0.42+p.sev*0.5+gauss()*0.08,0.05,0.99);
+  } else p.score=clamp(0.07+Math.abs(gauss())*0.11,0.01,0.9);
+  return p;
+}
+function judge(p){
+  p.flag=p.score>=S.th;S.total++;if(p.flag)S.nok++;
+  if(p.defect){if(p.flag){S.tp++;S.byType[p.defect]++;}else S.fn++;}else{if(p.flag)S.fp++;else S.tn++;}
+  if(p.flag){p.time=S.simSec;S.gallery.unshift(p);if(S.gallery.length>8)S.gallery.pop();}
+}
+
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function drawPart(c,cx,cy,w,p,o){
+  o=o||{};const h=w*0.6,x=cx-w/2,y=cy-h/2,R=w*0.07;
+  c.save();c.globalAlpha=o.alpha==null?1:o.alpha;
+  c.fillStyle=tok("--shadow");rr(c,x+2,y+4,w,h,R);c.fill();
+  const g=c.createLinearGradient(x,y,x,y+h);g.addColorStop(0,tok("--steel-1"));g.addColorStop(1,tok("--steel-2"));
+  c.fillStyle=g;rr(c,x,y,w,h,R);c.fill();c.lineWidth=1;c.strokeStyle=tok("--steel-edge");c.stroke();
+  const hole=o.holeColor||tok("--belt");
+  [[-0.3],[0.3]].forEach((hp,i)=>{
+    c.beginPath();c.arc(cx+hp[0]*w,cy,w*0.07,0,7);
+    if(p.defect==="Missing hole"&&i===1){c.strokeStyle="rgba(0,0,0,.12)";c.stroke();return;}
+    c.fillStyle=hole;c.fill();c.strokeStyle=tok("--steel-edge");c.stroke();
+  });
+  c.fillStyle=hole;rr(c,cx-w*0.08,cy-h*0.07,w*0.16,h*0.14,h*0.07);c.fill();
+  if(p.defect){
+    const dx=cx+p.dx*w,dy=cy+p.dy*h;c.save();rr(c,x,y,w,h,R);c.clip();
+    if(p.defect==="Scratch"){const L=w*(0.12+p.sev*0.2);c.lineCap="round";c.strokeStyle="rgba(50,58,64,.7)";c.lineWidth=Math.max(1,w*0.01);
+      c.beginPath();c.moveTo(dx-Math.cos(p.ang)*L/2,dy-Math.sin(p.ang)*L/2);c.lineTo(dx+Math.cos(p.ang)*L/2,dy+Math.sin(p.ang)*L/2);c.stroke();}
+    else if(p.defect==="Dent"){const r=w*(0.045+p.sev*0.05);const rg=c.createRadialGradient(dx,dy,0,dx,dy,r);rg.addColorStop(0,"rgba(40,46,52,.45)");rg.addColorStop(1,"rgba(40,46,52,0)");c.fillStyle=rg;c.beginPath();c.ellipse(dx,dy,r*1.3,r,p.ang,0,7);c.fill();}
+    else if(p.defect==="Corrosion"){let q=p.s;for(let i=0;i<8;i++){q=(q*1103515245+12345)&0x7fffffff;const a=(q%628)/100,d=(q%97)/97*w*0.06*(0.6+p.sev);c.fillStyle="rgba(160,88,40,.55)";c.beginPath();c.arc(dx+Math.cos(a)*d,dy+Math.sin(a)*d,w*(0.01+((q>>5)%10)/10*0.018),0,7);c.fill();}}
+    else if(p.defect==="Crack"){let q=p.s,px=dx,py=dy;c.strokeStyle="rgba(30,34,38,.75)";c.lineWidth=Math.max(1,w*0.007);c.beginPath();c.moveTo(px,py);
+      for(let i=0;i<7;i++){q=(q*1103515245+12345)&0x7fffffff;px+=Math.cos(p.ang)*w*0.028+((q%100)/100-.5)*w*0.025;py+=Math.sin(p.ang)*w*0.028+(((q>>7)%100)/100-.5)*w*0.025;c.lineTo(px,py);}c.stroke();}
+    c.restore();
+  }
+  if(o.heat&&p.flag){
+    const hx=cx+p.dx*w,hy=cy+p.dy*h,Rh=w*(p.defect?0.15:0.11);
+    c.strokeStyle=p.defect?tok("--bad"):tok("--warn");c.lineWidth=Math.max(1.5,w*0.008);c.setLineDash([4,3]);
+    c.beginPath();c.arc(hx,hy,Rh,0,7);c.stroke();c.setLineDash([]);
+    const hg=c.createRadialGradient(hx,hy,0,hx,hy,Rh);hg.addColorStop(0,"rgba(220,60,45,.22)");hg.addColorStop(1,"rgba(220,60,45,0)");c.fillStyle=hg;c.fill();
+  }
+  c.restore();
+}
+
+const belt=$("belt"),bctx=belt.getContext("2d");let W=0,H=0;
+function sizeBelt(){const d=Math.min(2,window.devicePixelRatio||1),r=belt.getBoundingClientRect();W=r.width;H=r.height;belt.width=Math.round(W*d);belt.height=Math.round(H*d);bctx.setTransform(d,0,0,d,0,0);}
+new ResizeObserver(()=>{sizeBelt();if(!S.running)drawBelt();}).observe(belt);sizeBelt();
+
+let parts=[],beltOff=0,sinceSpawn=999,flash=0,flashBad=false;
+const partW=()=>Math.min(130,Math.max(84,H*0.46));
+const camX=()=>W*0.46, divX=()=>W*0.76, beltY=()=>H*0.56;
+const speed=()=>partW()*1.6/(60/S.ppm);
+
+function drawBelt(){
+  const c=bctx,w=partW(),cy=beltY(),bh=w*0.86,by=cy-bh/2;
+  c.fillStyle=tok("--surface");c.fillRect(0,0,W,H);
+  c.fillStyle=tok("--belt");rr(c,8,by,W-16,bh,10);c.fill();
+  c.save();rr(c,8,by,W-16,bh,10);c.clip();c.strokeStyle=tok("--belt-tick");c.lineWidth=1;
+  const step=36;for(let x=(beltOff%step)-step;x<W;x+=step){c.beginPath();c.moveTo(x,by);c.lineTo(x,by+bh);c.stroke();}c.restore();
+  const cx=camX(),acc=tok("--accent");
+  // camera + field of view
+  c.save();c.globalAlpha=.07+flash*.08;c.fillStyle=flash>0?(flashBad?tok("--bad"):tok("--ok")):acc;
+  c.beginPath();c.moveTo(cx-10,40);c.lineTo(cx+10,40);c.lineTo(cx+w*0.7,by);c.lineTo(cx-w*0.7,by);c.closePath();c.fill();c.restore();
+  c.fillStyle=tok("--fg");rr(c,cx-22,18,44,20,5);c.fill();c.fillStyle=tok("--surface");c.beginPath();c.arc(cx,38,5,0,7);c.fill();
+  c.strokeStyle=flash>0?(flashBad?tok("--bad"):tok("--ok")):acc;c.globalAlpha=flash>0?1:.55;c.lineWidth=1.5;c.setLineDash([5,4]);
+  rr(c,cx-w*0.66,by+6,w*1.32,bh-12,8);c.stroke();c.setLineDash([]);c.globalAlpha=1;
+  c.fillStyle=tok("--muted");c.font=`500 11px ${tok("--f-body")}`;c.textAlign="center";
+  c.fillText("Camera",cx,14);c.fillText("Reject",divX()+w*0.35,H-8);c.textAlign="right";c.fillText("OK parts →",W-16,by-10);c.textAlign="left";
+  for(const p of parts)drawPart(c,p.x,p.y,w,p,{heat:p.done,alpha:p.alpha});
+}
+function tick(dt){
+  const w=partW(),v=speed();beltOff+=v*dt;sinceSpawn+=dt;S.simSec+=dt;
+  if(sinceSpawn>=60/S.ppm){sinceSpawn=0;const p=makePart();p.x=-w;p.y=beltY();p.alpha=1;parts.push(p);}
+  for(const p of parts){
+    if(p.rejecting){p.y+=v*0.8*dt;p.alpha=Math.max(0,p.alpha-dt*1.4);}else p.x+=v*dt;
+    if(!p.done&&p.x>=camX()){p.done=true;judge(p);show(p);flash=1;flashBad=p.flag;}
+    if(p.done&&p.flag&&!p.rejecting&&p.x>=divX())p.rejecting=true;
+  }
+  parts=parts.filter(p=>p.x-w<W&&p.alpha>0.02);flash=Math.max(0,flash-dt*2.5);
+}
+
+const shot=$("shot"),sctx=shot.getContext("2d");let lastShown=null;
+function drawShot(p){sctx.fillStyle=tok("--surface-2");sctx.fillRect(0,0,640,360);if(p)drawPart(sctx,320,180,400,p,{heat:true,holeColor:tok("--surface-2")});}
+const f2=x=>x.toFixed(2);
+function show(p){
+  lastShown=p;const b=$("badge");b.classList.toggle("bad",p.flag);b.textContent=p.flag?"NOT OK":"OK";
+  $("vType").textContent=p.flag?(p.defect?p.defect+" detected":"Unusual surface, check manually"):(p.defect?"Below threshold, passed":"No anomaly found");
+  $("vScore").textContent=`Anomaly score ${f2(p.score)} · threshold ${f2(S.th)}`;
+  $("shotId").textContent=`#${p.id} · ${clock(S.simSec)}`;drawShot(p);updateStats();if(p.flag)renderGallery();
+}
+const pct=(a,b)=>b?(Math.round(a/b*1000)/10)+" %":"–";
+function updateStats(){
+  $("sTotal").textContent=S.total.toLocaleString("en-US");$("sNok").textContent=S.nok.toLocaleString("en-US");
+  $("sRecall").textContent=pct(S.tp,S.tp+S.fn);$("sFp").textContent=pct(S.fp,S.fp+S.tn);
+  $("clock").textContent="Shift 1 · "+clock(S.simSec);renderBars();
+}
+function clock(sec){const t=6*3600+Math.floor(sec);return [Math.floor(t/3600)%24,Math.floor(t/60)%60,t%60].map(n=>String(n).padStart(2,"0")).join(":");}
+function renderGallery(){
+  const g=$("gallery");g.innerHTML="";
+  S.gallery.forEach(p=>{
+    const d=document.createElement("div");d.className="g-item";
+    const c=document.createElement("canvas");c.width=240;c.height=160;const x=c.getContext("2d");
+    x.fillStyle=tok("--surface-2");x.fillRect(0,0,240,160);drawPart(x,120,80,170,p,{heat:true,holeColor:tok("--surface-2")});
+    const t=document.createElement("div");t.className="t";t.innerHTML=p.defect?`<b>${p.defect}</b><span class="num">${f2(p.score)}</span>`:`<b class="fa">False alarm</b><span class="num">${f2(p.score)}</span>`;
+    const tm=document.createElement("div");tm.className="t";tm.innerHTML=`<span class="num">#${p.id}</span><span class="num">${clock(p.time).slice(0,5)}</span>`;
+    d.append(c,t,tm);g.append(d);
+  });
+}
+function renderBars(){
+  const max=Math.max(1,...TYPES.map(t=>S.byType[t]),S.fn);
+  $("bars").innerHTML=TYPES.map(t=>`<div class="bar"><span>${t}</span><div class="track"><div class="fill" style="width:${S.byType[t]/max*100}%"></div></div><span class="n">${S.byType[t]}</span></div>`).join("")+
+    `<div class="bar"><span>Missed</span><div class="track"><div class="fill miss" style="width:${S.fn/max*100}%"></div></div><span class="n">${S.fn}</span></div>`;
+}
+
+let trainParts=[];
+function buildTrain(n){const grid=$("trainGrid");grid.innerHTML="";trainParts=[];const sv=S.defRate;S.defRate=0;for(let i=0;i<25;i++)trainParts.push(makePart());S.defRate=sv;
+  trainParts.forEach((p,i)=>{const c=document.createElement("canvas");c.width=150;c.height=100;grid.append(c);paintThumb(c,i<n?p:null);});}
+function paintThumb(c,p){const x=c.getContext("2d");x.fillStyle=tok("--surface-2");x.fillRect(0,0,150,100);if(p)drawPart(x,75,50,104,p,{holeColor:tok("--surface-2")});}
+function retrain(){
+  if(S.training)return;S.training=true;const was=S.running;setRunning(false);
+  buildTrain(0);$("trainState").textContent="Training";$("trainBar").style.width="0%";
+  const cs=$("trainGrid").querySelectorAll("canvas");let i=0;
+  const iv=setInterval(()=>{
+    if(i<cs.length){paintThumb(cs[i],trainParts[i]);i++;$("trainBar").style.width=(i/cs.length*85)+"%";$("trainNote").textContent=`Captured ${i} of 25`;}
+    else{clearInterval(iv);$("trainNote").textContent="Building model";$("trainBar").style.width="100%";
+      setTimeout(()=>{S.training=false;$("trainState").textContent="Ready";$("trainNote").textContent="Trained in 38 s";if(was)setRunning(true);},700);}
+  },reduce?20:100);
+}
+
+let last=0,raf=0;
+function loop(t){const dt=Math.min(0.05,(t-(last||t))/1000);last=t;if(S.running){tick(dt);drawBelt();raf=requestAnimationFrame(loop);}}
+function setRunning(on){S.running=on;$("toggle").textContent=on?"Pause line":"Start line";$("runText").textContent=on?"Line running":"Line paused";$("runDot").classList.toggle("idle",!on);
+  cancelAnimationFrame(raf);if(on){last=0;raf=requestAnimationFrame(loop);}else drawBelt();}
+$("toggle").addEventListener("click",()=>setRunning(!S.running));
+$("speed").addEventListener("input",e=>{S.ppm=+e.target.value;$("speedOut").textContent=S.ppm+" /min";$("takt").textContent=(60/S.ppm).toFixed(1)+" s";});
+$("defRate").addEventListener("input",e=>{S.defRate=e.target.value/100;$("defOut").textContent=e.target.value+" %";});
+$("thresh").addEventListener("input",e=>{S.th=+e.target.value;$("thOut").textContent=S.th.toFixed(2);if(lastShown)$("vScore").textContent=`Anomaly score ${f2(lastShown.score)} · threshold ${f2(S.th)}`;});
+$("retrain").addEventListener("click",retrain);
+
+function buildReport(){
+  const top=TYPES.slice().sort((a,b)=>S.byType[b]-S.byType[a])[0];
+  const rows=[["Shift","1 · started 06:00"],["Report time",clock(S.simSec)],["Part","BRK-2040 bracket"],["Parts inspected",S.total.toLocaleString("en-US")],["OK",(S.total-S.nok).toLocaleString("en-US")],["Rejected",S.nok.toLocaleString("en-US")],["Defects caught",pct(S.tp,S.tp+S.fn)],["False alarm rate",pct(S.fp,S.fp+S.tn)],["Most frequent defect",S.byType[top]?`${top} (${S.byType[top]})`:"–"],["Sensitivity threshold",S.th.toFixed(2)],["Model","PatchCore, 25 good samples"]];
+  $("repBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
+  $("repTime").textContent="Generated "+clock(S.simSec);
+  $("repText").value="LineSight shift report · Station LS-01, Line 2\n"+rows.map(r=>`${r[0]}: ${r[1]}`).join("\n");
+}
+$("reportBtn").addEventListener("click",()=>{buildReport();$("report").hidden=false;$("repText").hidden=true;$("toast").textContent="";$("report").scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});});
+$("closeRep").addEventListener("click",()=>{$("report").hidden=true;});
+$("copyRep").addEventListener("click",()=>{
+  const fb=()=>{const ta=$("repText");ta.hidden=false;ta.focus();ta.select();$("toast").textContent="Text selected. Press Ctrl+C to copy.";};
+  try{navigator.clipboard.writeText($("repText").value).then(()=>{$("toast").textContent="Report copied";},fb);}catch(e){fb();}
+});
+
+const eur=n=>(n<0?"−€":"€")+Math.abs(Math.round(n)).toLocaleString("en-US");
+function roi(){
+  const sh=+$("shifts").value,cost=+$("inspCost").value||0,share=(+$("share").value||0)/100,scrap=+$("scrap").value||0,setup=+$("setup").value||0,fee=+$("fee").value||0;
+  const save=sh*cost*share+scrap,net=save/12-fee;
+  $("rSave").textContent=eur(save);$("rCost1").textContent=eur(setup+12*fee);$("rNet3").textContent=eur(save*3-setup-36*fee);
+  $("rPayback").textContent=net<=0?"No payback":(setup/net<1?"Under 1 month":(setup/net).toFixed(1)+" months");
+}
+["shifts","inspCost","share","scrap","setup","fee"].forEach(id=>$(id).addEventListener("input",roi));
+
+function repaintAll(){drawBelt();drawShot(lastShown);renderGallery();$("trainGrid").querySelectorAll("canvas").forEach((c,i)=>paintThumb(c,trainParts[i]));}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",repaintAll);
+new MutationObserver(repaintAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+buildTrain(25);
+for(let i=0;i<412;i++){S.simSec+=2;judge(makePart());}
+(function(){const w=partW(),gap=w*1.6;
+  for(let x=camX()-gap*0.4;x>-w;x-=gap){const p=makePart();p.x=x;p.y=beltY();p.alpha=1;parts.push(p);}
+  for(let x=camX()+gap*0.6;x<W+w;x+=gap){const p=makePart();p.x=x;p.y=beltY();p.alpha=1;p.done=true;p.flag=p.score>=S.th;if(p.flag&&x>divX())continue;parts.push(p);}})();
+show(S.gallery[0]||makePart());renderGallery();updateStats();roi();setRunning(S.running);
+})();
+</script>
+<script>
+(function(){function post(){try{parent.postMessage({type:"qoptra-demo-height",height:document.documentElement.scrollHeight},"*");}catch(e){}}
+new ResizeObserver(post).observe(document.body);window.addEventListener("load",post);post();})();
+</script>
+</body>
+</html>
