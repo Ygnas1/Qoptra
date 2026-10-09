@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="nav">
           <div className="container nav-inner">
             <Link href="/" aria-label="Qoptra home" className="nav-home">
-              <Logo size={28} />
+              <Logo size={32} />
             </Link>
             <nav aria-label="Main">
               <Link href="/#how">How it works</Link>

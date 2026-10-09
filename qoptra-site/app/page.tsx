@@ -65,7 +65,7 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-visual" aria-hidden="true">
-          <Mark size={260} />
+          <Mark size={230} />
           <span className="scan" />
         </div>
       </section>

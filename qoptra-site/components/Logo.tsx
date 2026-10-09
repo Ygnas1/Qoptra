@@ -1,50 +1,34 @@
-"use client";
+/* eslint-disable @next/next/no-img-element */
 
-import { useId } from "react";
+// The Qoptra logo is the original artwork (public/qoptra-logo.png and public/qoptra-mark.png),
+// cut out from the supplied image with a transparent background. It is designed for dark backgrounds.
 
-const RING =
-  "M7 54 A47 47 0 1 0 101 54 A47 47 0 1 0 7 54 Z M36 52 A24 24 0 1 0 84 52 A24 24 0 1 0 36 52 Z";
-const TAIL = "50,60 77,60 111,98 84,98";
+const MARK_RATIO = 305 / 270; // width / height of qoptra-mark.png
+const LOGO_RATIO = 1098 / 270; // width / height of qoptra-logo.png
 
-/** The Qoptra Q: an off-centre ring (folded ribbon) with a tail laid over it. */
-export function Mark({ size = 32, flat = false }: { size?: number; flat?: boolean }) {
-  const id = useId().replace(/:/g, "");
-  if (flat) {
-    return (
-      <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
-        <path d={RING} fill="currentColor" fillRule="evenodd" />
-        <polygon points={TAIL} fill="var(--bg)" stroke="var(--bg)" strokeWidth="7" strokeLinejoin="round" />
-        <polygon points={TAIL} fill="currentColor" />
-      </svg>
-    );
-  }
+/** The Q symbol on its own. `size` is the height in px. */
+export function Mark({ size = 32 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
-      <defs>
-        <linearGradient id={`${id}r`} x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#FFFFFF" />
-          <stop offset="0.5" stopColor="#C4C6CC" />
-          <stop offset="1" stopColor="#6E717A" />
-        </linearGradient>
-        <linearGradient id={`${id}t`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#F4F5F7" />
-          <stop offset="0.5" stopColor="#9C9FA6" />
-          <stop offset="1" stopColor="#F7F7F9" />
-        </linearGradient>
-      </defs>
-      <path d={RING} fill={`url(#${id}r)`} fillRule="evenodd" />
-      <polygon points={TAIL} fill={`url(#${id}t)`} />
-    </svg>
+    <img
+      src="/qoptra-mark.png"
+      alt=""
+      aria-hidden="true"
+      width={Math.round(size * MARK_RATIO)}
+      height={size}
+      style={{ display: "block", width: "auto", height: size, maxWidth: "100%" }}
+    />
   );
 }
 
+/** The full logo: symbol plus "Qoptra" wordmark. `size` is the height in px. */
 export function Logo({ size = 30 }: { size?: number }) {
   return (
-    <span className="logo">
-      <Mark size={size} />
-      <span className="logo-word" style={{ fontSize: size * 0.82 }}>
-        Qoptra
-      </span>
-    </span>
+    <img
+      src="/qoptra-logo.png"
+      alt="Qoptra"
+      width={Math.round(size * LOGO_RATIO)}
+      height={size}
+      style={{ display: "block", width: "auto", height: size }}
+    />
   );
 }
