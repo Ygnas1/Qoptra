@@ -69,6 +69,21 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="container video-section" aria-labelledby="video-title">
+        <div className="video-head">
+          <span className="eyebrow">45-second explainer</span>
+          <h2 id="video-title">See how LineSight works</h2>
+        </div>
+        <video
+          className="video"
+          src="/video/linesight-explainer.mp4"
+          poster="/video/linesight-explainer-poster.jpg"
+          controls
+          playsInline
+          preload="metadata"
+        />
+      </section>
+
       <div className="container" style={{ paddingBottom: 96 }}>
         <div className="facts">
           <div className="fact"><b>~25 good parts</b><span>to teach it a new product. No defect photos needed.</span></div>

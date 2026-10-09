@@ -151,3 +151,9 @@ a.demo-card:hover { border-color: var(--accent); }
 .footer { border-top: 1px solid var(--line); padding-block: 32px; color: var(--muted); font-size: 15px; }
 .footer-inner { display: flex; gap: 12px 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .footer .logo-word { color: var(--fg); }
+
+/* Explainer video */
+.video-section { display: grid; gap: 20px; padding-bottom: 72px; }
+.video-head { display: grid; gap: 10px; }
+.video-head h2 { font-size: clamp(28px, 4vw, 40px); }
+.video { width: 100%; aspect-ratio: 16 / 9; height: auto; display: block; border-radius: 16px; border: 1px solid var(--line); background: #000; }
