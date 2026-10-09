@@ -156,7 +156,7 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:80ch}
     <div class="card station">
       <div class="card-head"><h2>Station LS-01 · Line 2</h2><span class="label mono" id="clock">Shift 1 · 06:00:00</span></div>
       <canvas id="belt" aria-label="Simulated conveyor with parts passing under the inspection camera"></canvas>
-      <div class="meta-row"><span>Part <b>BRK-2040 bracket</b></span><span>Takt <b class="num" id="takt">2.0 s</b></span><span>Model <b>PatchCore · 25 good samples</b></span><span>Runs on <b>edge device at the line</b></span></div>
+      <div class="meta-row"><span>Part <b>BRK-2040 bracket</b></span><span>Takt <b class="num" id="takt">2.0 s</b></span><span>Model <b>PatchCore · 2 weeks of production data</b></span><span>Runs on <b>edge device at the line</b></span></div>
       <div class="controls">
         <button class="btn primary" id="toggle" type="button">Pause line</button>
         <div class="ctl"><label for="speed">Line speed <output id="speedOut">30 /min</output></label><input id="speed" type="range" min="12" max="60" step="2" value="30"></div>
@@ -185,10 +185,10 @@ footer.note{color:var(--muted);font-size:.78rem;max-width:80ch}
   <section class="row">
     <div class="card">
       <div class="card-head"><h2>Model training</h2><span class="label" id="trainState">Ready</span></div>
-      <p class="muted">Learns what a good part looks like from 25 examples. No defect photos or labelling needed.</p>
+      <p class="muted">Learns what a good part looks like from your real production. No defect photos or labelling needed.</p>
       <div class="train-grid" id="trainGrid"></div>
       <div class="progress" aria-hidden="true"><span id="trainBar"></span></div>
-      <div class="actions"><button class="btn" id="retrain" type="button">Retrain from 25 parts</button><span class="muted num" id="trainNote">Trained in 38 s</span></div>
+      <div class="actions"><button class="btn" id="retrain" type="button">Add new samples</button><span class="muted num" id="trainNote">Trained in 38 s</span></div>
     </div>
 
     <div class="card">
@@ -399,7 +399,7 @@ $("retrain").addEventListener("click",retrain);
 
 function buildReport(){
   const top=TYPES.slice().sort((a,b)=>S.byType[b]-S.byType[a])[0];
-  const rows=[["Shift","1 · started 06:00"],["Report time",clock(S.simSec)],["Part","BRK-2040 bracket"],["Parts inspected",S.total.toLocaleString("en-US")],["OK",(S.total-S.nok).toLocaleString("en-US")],["Rejected",S.nok.toLocaleString("en-US")],["Defects caught",pct(S.tp,S.tp+S.fn)],["False alarm rate",pct(S.fp,S.fp+S.tn)],["Most frequent defect",S.byType[top]?`${top} (${S.byType[top]})`:"–"],["Sensitivity threshold",S.th.toFixed(2)],["Model","PatchCore, 25 good samples"]];
+  const rows=[["Shift","1 · started 06:00"],["Report time",clock(S.simSec)],["Part","BRK-2040 bracket"],["Parts inspected",S.total.toLocaleString("en-US")],["OK",(S.total-S.nok).toLocaleString("en-US")],["Rejected",S.nok.toLocaleString("en-US")],["Defects caught",pct(S.tp,S.tp+S.fn)],["False alarm rate",pct(S.fp,S.fp+S.tn)],["Most frequent defect",S.byType[top]?`${top} (${S.byType[top]})`:"–"],["Sensitivity threshold",S.th.toFixed(2)],["Model","PatchCore, 2 weeks of production data"]];
   $("repBody").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("");
   $("repTime").textContent="Generated "+clock(S.simSec);
   $("repText").value="LineSight shift report · Station LS-01, Line 2\n"+rows.map(r=>`${r[0]}: ${r[1]}`).join("\n");

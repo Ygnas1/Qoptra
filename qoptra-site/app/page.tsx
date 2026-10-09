@@ -53,7 +53,7 @@ export default function Home() {
         <div className="hero-copy">
           <span className="tag"><span className="dot" />Prototype running</span>
           <h1>
-            Cameras and AI that check every part. <span>Running on your line in a day.</span>
+            Cameras and AI that check every part. <span>Trained on your own production.</span>
           </h1>
           <p>
             Qoptra builds compact vision stations for manufacturers. Mount a camera over your conveyor, show it good parts, and it flags
@@ -86,7 +86,7 @@ export default function Home() {
 
       <div className="container" style={{ paddingBottom: 96 }}>
         <div className="facts">
-          <div className="fact"><b>~25 good parts</b><span>to teach it a new product. No defect photos needed.</span></div>
+          <div className="fact"><b>2 weeks</b><span>of real production data to learn your parts. No defect photos needed.</span></div>
           <div className="fact"><b>Every part</b><span>checked at line speed, not a random sample.</span></div>
           <div className="fact"><b>Stays local</b><span>Images are processed at the line and never leave the factory.</span></div>
           <div className="fact"><b>Fixed price</b><span>One published setup fee and a monthly subscription.</span></div>
@@ -108,11 +108,11 @@ export default function Home() {
         <div className="container">
           <div className="section-head">
             <span className="eyebrow">Setup</span>
-            <h2>From delivery to running in one day</h2>
+            <h2>From installation to live in about two weeks</h2>
           </div>
           <div className="steps">
-            <div className="step"><h3>Mount</h3><p>We bolt the camera, light and computer onto your existing conveyor. No line changes.</p></div>
-            <div className="step"><h3>Teach</h3><p>Run about 25 good parts past the camera. The model learns what normal looks like.</p></div>
+            <div className="step"><h3>Mount</h3><p>Day one: we bolt the camera, light and computer onto your existing conveyor. No line changes.</p></div>
+            <div className="step"><h3>Learn</h3><p>For about two weeks the station records your real production and learns what normal looks like, across shifts, batches and lighting.</p></div>
             <div className="step"><h3>Tune</h3><p>Together with your quality team we set how strict it should be, using real parts.</p></div>
             <div className="step"><h3>Run</h3><p>It checks every part, removes rejects and keeps a photo of each one for your records.</p></div>
           </div>
