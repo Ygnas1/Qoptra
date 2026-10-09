@@ -15,7 +15,7 @@ export function Mark({ size = 32 }: { size?: number }) {
       aria-hidden="true"
       width={Math.round(size * MARK_RATIO)}
       height={size}
-      style={{ display: "block", width: "auto", height: size, maxWidth: "100%" }}
+      style={{ display: "block", width: "100%", height: "auto", maxWidth: Math.round(size * MARK_RATIO) }}
     />
   );
 }
