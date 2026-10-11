@@ -134,9 +134,16 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 .kv span:nth-child(odd){color:var(--muted)}
 .kv span:nth-child(even){font-family:var(--f-mono);text-align:right}
 footer.note{color:var(--muted);font-size:.78rem;max-width:80ch}
+
+/* Large screens: scale up when opened full screen (not inside the site's frame) */
+@media (min-width:1600px){html.standalone{zoom:1.12}}
+@media (min-width:1920px){html.standalone{zoom:1.25}}
+@media (min-width:2400px){html.standalone{zoom:1.45}}
+@media (min-width:3200px){html.standalone{zoom:1.8}}
 </style>
 </head>
 <body>
+<script>if(window.top===window.self)document.documentElement.classList.add('standalone');</script>
 <div class="wrap">
   <header class="top">
     <div class="brand">

@@ -117,9 +117,16 @@ select{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);
 .field input{width:100%;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 10px;font-family:var(--f-mono);font-size:.88rem}
 .payback{display:grid;gap:14px;padding:18px;border-radius:10px;background:var(--surface-2)}
 footer.note{color:var(--muted);font-size:.78rem;max-width:85ch}
+
+/* Large screens: scale up when opened full screen (not inside the site's frame) */
+@media (min-width:1600px){html.standalone{zoom:1.12}}
+@media (min-width:1920px){html.standalone{zoom:1.25}}
+@media (min-width:2400px){html.standalone{zoom:1.45}}
+@media (min-width:3200px){html.standalone{zoom:1.8}}
 </style>
 </head>
 <body>
+<script>if(window.top===window.self)document.documentElement.classList.add('standalone');</script>
 <div class="wrap">
   <header class="top">
     <div class="brand">
