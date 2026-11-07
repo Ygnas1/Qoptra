@@ -252,3 +252,15 @@ a.demo-card:hover { border-color: var(--accent); }
 .gauge-lbl { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
 .facts-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
 .err { color: var(--bad); margin-top: 12px; }
+.video.showcase-video { max-width: 760px; }
+
+.heat-switch { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--fg); font: inherit; cursor: pointer; }
+.heat-switch:hover:not(:disabled) { border-color: var(--accent); }
+.heat-switch:disabled { opacity: 0.55; cursor: default; }
+.heat-track { flex: none; width: 46px; height: 26px; border-radius: 99px; background: var(--line-2); position: relative; transition: background 0.15s; }
+.heat-track i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
+.heat-switch[aria-checked="true"] .heat-track { background: var(--accent); }
+.heat-switch[aria-checked="true"] .heat-track i { transform: translateX(20px); }
+.heat-lbl { display: grid; gap: 2px; }
+.heat-lbl b { font-weight: 600; font-size: 16px; }
+.heat-lbl small { color: var(--muted); font-size: 13px; }

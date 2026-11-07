@@ -40,11 +40,6 @@ export default function Showcase() {
           playsInline
           preload="metadata"
         />
-        <p className="note">
-          How this footage was made: circuit boards from a public research photo set (some with real defects) were placed on a real conveyor
-          photograph and animated as a moving line. It is not a recording of a physical factory line. The scores and alarms in it are real output of
-          the model; the siren and the notification card are simulated.
-        </p>
       </section>
 
       <section className="section">

@@ -205,7 +205,7 @@ export function ModelTester() {
     cv.width = W; cv.height = H;
     const c = cv.getContext("2d")!;
     c.drawImage(src, 0, 0);
-    if (showHeat && res.verdict !== "normal") {
+    if (showHeat && res.verdict === "defect") {
       const im = c.getImageData(0, 0, W, H);
       for (let i = 0; i < W * H; i++) {
         const [r, g, b, a] = heat(res.map[i], meta.threshold, meta.heatMax);
@@ -318,10 +318,22 @@ export function ModelTester() {
         {res && !busy && meta && (
           <div className="result-grid">
             <div className="result-img">
+              {res.verdict === "defect" && (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={showHeat}
+                  className="heat-switch"
+                  onClick={() => setShowHeat((v) => !v)}
+                >
+                  <span className="heat-track"><i /></span>
+                  <span className="heat-lbl">
+                    <b>Show where the model looks</b>
+                    <small>{showHeat ? "On: red marks what looks unusual" : "Off: original image"}</small>
+                  </span>
+                </button>
+              )}
               <canvas ref={viewCanvas} width={W} height={H} />
-              <label className="toggle">
-                <input type="checkbox" checked={showHeat} onChange={(e) => setShowHeat(e.target.checked)} /> Show where the model looks
-              </label>
               <span className="muted small">{res.name} · analysed in {Math.round(res.ms)} ms</span>
             </div>
             <div className="result-info">

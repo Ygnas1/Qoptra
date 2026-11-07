@@ -78,16 +78,6 @@
    "title": "Different objects on a belt"
   },
   {
-   "file": "o3.png",
-   "group": "other",
-   "title": "Board, different camera setup"
-  },
-  {
-   "file": "o4.png",
-   "group": "other",
-   "title": "Board, different camera setup"
-  },
-  {
    "file": "o5.png",
    "group": "other",
    "title": "Plain gradient"
@@ -120,8 +110,6 @@
   "d6.png": 2.539898633956909,
   "o1.png": 3.304053544998169,
   "o2.png": 3.431025981903076,
-  "o3.png": 2.3624861240386963,
-  "o4.png": 2.283735513687134,
   "o5.png": 3.222517967224121
  }
 }
