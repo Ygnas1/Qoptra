@@ -61,6 +61,7 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <Link className="btn primary" href="/demos/linesight">Try the live demo</Link>
+            <Link className="btn" href="/showcase">Watch it detect defects</Link>
             <Link className="btn" href="#how">See how it works</Link>
           </div>
         </div>

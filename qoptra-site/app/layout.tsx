@@ -30,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/#how">How it works</Link>
               <Link href="/#hardware">Hardware</Link>
               <Link href="/demos">Demos</Link>
+              <Link href="/showcase">Showcase</Link>
               <Link href="/#contact" className="nav-cta">
                 Contact
               </Link>

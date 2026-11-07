@@ -1,0 +1,127 @@
+{
+ "threshold": 1.8209843635559082,
+ "unknown": {
+  "minAreaFrac": 0.16,
+  "maxScore": 3.5
+ },
+ "heatMax": 3.2,
+ "modelMB": 57,
+ "samples": [
+  {
+   "file": "g1.png",
+   "group": "good",
+   "title": "Good board 1"
+  },
+  {
+   "file": "g2.png",
+   "group": "good",
+   "title": "Good board 2"
+  },
+  {
+   "file": "g3.png",
+   "group": "good",
+   "title": "Good board 3"
+  },
+  {
+   "file": "g4.png",
+   "group": "good",
+   "title": "Good board 4"
+  },
+  {
+   "file": "g5.png",
+   "group": "good",
+   "title": "Good board 5"
+  },
+  {
+   "file": "g6.png",
+   "group": "good",
+   "title": "Good board 6"
+  },
+  {
+   "file": "d1.png",
+   "group": "defect",
+   "title": "Defective board 1"
+  },
+  {
+   "file": "d2.png",
+   "group": "defect",
+   "title": "Defective board 2"
+  },
+  {
+   "file": "d3.png",
+   "group": "defect",
+   "title": "Defective board 3"
+  },
+  {
+   "file": "d4.png",
+   "group": "defect",
+   "title": "Defective board 4"
+  },
+  {
+   "file": "d5.png",
+   "group": "defect",
+   "title": "Defective board 5"
+  },
+  {
+   "file": "d6.png",
+   "group": "defect",
+   "title": "Defective board 6"
+  },
+  {
+   "file": "o1.png",
+   "group": "other",
+   "title": "Different objects on a belt"
+  },
+  {
+   "file": "o2.png",
+   "group": "other",
+   "title": "Different objects on a belt"
+  },
+  {
+   "file": "o3.png",
+   "group": "other",
+   "title": "Board, different camera setup"
+  },
+  {
+   "file": "o4.png",
+   "group": "other",
+   "title": "Board, different camera setup"
+  },
+  {
+   "file": "o5.png",
+   "group": "other",
+   "title": "Plain gradient"
+  }
+ ],
+ "stats": {
+  "threshold": 1.8209843635559082,
+  "auroc": 0.9924,
+  "caught": 97,
+  "false_alarms": 2,
+  "good_flagged_unknown": 0,
+  "defects_flagged_unknown": 0,
+  "ood_n": 64,
+  "ood_unknown": 64,
+  "empty_belt_called_normal": 8,
+  "empty_belt_n": 8
+ },
+ "expected": {
+  "g1.png": 1.4989433288574219,
+  "g2.png": 1.6287200450897217,
+  "g3.png": 1.8048357963562012,
+  "g4.png": 1.4509772062301636,
+  "g5.png": 1.5054455995559692,
+  "g6.png": 1.4480061531066895,
+  "d1.png": 2.2648723125457764,
+  "d2.png": 2.3675453662872314,
+  "d3.png": 2.812819480895996,
+  "d4.png": 2.39709210395813,
+  "d5.png": 2.180062770843506,
+  "d6.png": 2.539898633956909,
+  "o1.png": 3.304053544998169,
+  "o2.png": 3.431025981903076,
+  "o3.png": 2.3624861240386963,
+  "o4.png": 2.283735513687134,
+  "o5.png": 3.222517967224121
+ }
+}
