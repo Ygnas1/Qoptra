@@ -17,7 +17,7 @@ const STATS = [
 
 export default function Showcase() {
   return (
-    <>
+    <div className="showcase">
       <section className="container showcase-head">
         <span className="tag"><span className="dot" />Prototype showcase</span>
         <h1>Watch LineSight inspect a moving line</h1>
@@ -72,27 +72,6 @@ export default function Showcase() {
             ))}
           </div>
           <p className="note">Measured on 200 boards held back from training (100 good, 100 with real defects). Results on your own parts will differ.</p>
-
-          <div className="model-cols">
-            <div className="card">
-              <h3>How it works</h3>
-              <ol className="plain">
-                <li>A pretrained image network turns each small patch of a photo into a numeric fingerprint.</li>
-                <li>Fingerprints from 200 good boards are stored as the memory of &quot;normal&quot;.</li>
-                <li>A new board is scored by how far its most unusual patch is from anything in that memory.</li>
-                <li>The alarm threshold is set from 60 further good boards, never from defects.</li>
-              </ol>
-              <p className="muted small">Method: PatchCore (Roth et al., CVPR 2022), implemented in about 90 lines of Python and trained on a laptop CPU.</p>
-            </div>
-            <div className="card">
-              <h3>What it learned from</h3>
-              <ul className="plain">
-                <li>200 photos of one type of charge board for training, 60 for the threshold, 200 for testing.</li>
-                <li>Boards come from the public VisA dataset (CC BY 4.0), placed on a conveyor photo from an open Edge Impulse dataset (Apache 2.0).</li>
-                <li>Training pictures use the same camera view as the video, with small shifts and rotations like a real line.</li>
-              </ul>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -148,6 +127,9 @@ export default function Showcase() {
           </div>
         </div>
       </section>
-    </>
+      <p className="container credits">
+        Credits: circuit-board photos from the VisA dataset (CC BY 4.0), conveyor photo from an Edge Impulse open dataset (Apache 2.0). Method: PatchCore (Roth et al., CVPR 2022).
+      </p>
+    </div>
   );
 }

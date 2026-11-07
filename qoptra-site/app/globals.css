@@ -266,3 +266,7 @@ a.demo-card:hover { border-color: var(--accent); }
 .heat-lbl small { color: var(--muted); font-size: 13px; }
 .video-sm { max-width: 760px; }
 .video.showcase-video { max-width: 820px; margin-inline: auto; }
+.showcase .section { padding-block: 64px; }
+.showcase .section-head { margin-bottom: 32px; }
+.showcase .note { margin-top: 16px; }
+.credits { color: var(--muted); font-size: 13px; padding-block: 8px 40px; opacity: 0.8; }
