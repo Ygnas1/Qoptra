@@ -264,3 +264,5 @@ a.demo-card:hover { border-color: var(--accent); }
 .heat-lbl { display: grid; gap: 2px; }
 .heat-lbl b { font-weight: 600; font-size: 16px; }
 .heat-lbl small { color: var(--muted); font-size: 13px; }
+.video-sm { max-width: 760px; }
+.video.showcase-video { max-width: 820px; margin-inline: auto; }

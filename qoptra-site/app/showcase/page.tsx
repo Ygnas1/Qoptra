@@ -33,7 +33,7 @@ export default function Showcase() {
           <h2 id="sc-video">Boards on the belt, scored one by one</h2>
         </div>
         <video
-          className="video"
+          className="video showcase-video"
           src="/video/linesight-detection.mp4"
           poster="/video/linesight-detection-poster.jpg"
           controls
