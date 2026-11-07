@@ -51,7 +51,7 @@ export default function Showcase() {
           <div className="steps three">
             <div className="step"><h3>Look</h3><p>A camera above the belt takes a picture the moment a board reaches the marked inspection zone.</p></div>
             <div className="step"><h3>Score</h3><p>The model compares the picture with what good boards look like and gives a score. Low score: OK. High score: something is off.</p></div>
-            <div className="step"><h3>Alert</h3><p>Above the threshold, the signal tower turns red, an alarm sounds and the shift lead is notified. The board is not removed in this demo.</p></div>
+            <div className="step"><h3>Alert</h3><p>Above the threshold, the signal tower turns red, an alarm sounds and the shift lead is notified.</p></div>
           </div>
         </div>
       </section>
